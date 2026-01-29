@@ -5,7 +5,7 @@ JEPA 模型基类和注册机制
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, List, Optional, Type
 
 import torch
 import torch.nn as nn
@@ -38,7 +38,7 @@ class ModelRegistry:
         return cls._registry[name]
     
     @classmethod
-    def list_models(cls) -> list[str]:
+    def list_models(cls) -> List[str]:
         """列出所有已注册的模型"""
         return list(cls._registry.keys())
     
