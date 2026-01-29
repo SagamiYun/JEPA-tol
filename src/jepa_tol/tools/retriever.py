@@ -67,6 +67,7 @@ class JEPARetriever:
         
         # FAISS 索引 (可选)
         self.faiss_index = None
+        self._faiss = None  # 默认值
         self._try_init_faiss()
         
         # 元数据存储
@@ -300,10 +301,13 @@ class JEPARetriever:
         retriever.metadata_store = state["metadata"]
         
         # 加载索引
-        if (path / "faiss_index.bin").exists() and retriever._faiss is not None:
-            retriever.faiss_index = retriever._faiss.read_index(str(path / "faiss_index.bin"))
-        elif (path / "search_index.pt").exists():
-            retriever.search_engine = SimilaritySearch.load(path / "search_index.pt", device=device)
+        faiss_path = path / "faiss_index.bin"
+        search_index_path = path / "search_index.pt"
+        
+        if faiss_path.exists() and retriever._faiss is not None:
+            retriever.faiss_index = retriever._faiss.read_index(str(faiss_path))
+        elif search_index_path.exists():
+            retriever.search_engine = SimilaritySearch.load(search_index_path, device=device)
         
         return retriever
     
