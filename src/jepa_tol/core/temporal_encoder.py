@@ -309,24 +309,30 @@ class TemporalEncoder(Encoder):
         B, T, C, H, W = x.shape
         
         # Patch embedding: 每帧独立处理
-        x = x.view(B * T, C, H, W)
+        x = x.reshape(B * T, C, H, W)
         x = self.patch_embed(x)  # (B*T, D, H', W')
         x = x.flatten(2).transpose(1, 2)  # (B*T, N, D)
         
-        N = x.shape[1]  # patch 数量
+        N = x.shape[1]  # 实际 patch 数量
         
-        # 添加空间位置编码
-        x = x + self.pos_embed[:, :N]  # 确保 pos_embed 尺寸匹配
+        # 添加空间位置编码 (确保尺寸匹配)
+        if self.pos_embed.shape[1] >= N:
+            x = x + self.pos_embed[:, :N, :]
+        else:
+            # 如果 pos_embed 太小，使用插值或裁剪
+            x = x + self.pos_embed[:, :self.pos_embed.shape[1], :]
         
-        # Reshape 为视频格式
-        x = x.view(B, T, N, self.embed_dim)
+        # Reshape 为视频格式 (B, T, N, D)
+        x = x.reshape(B, T, N, self.embed_dim)
         
-        # 添加时序位置编码 (输入是 4D，输出也是 4D)
-        x = self.temporal_pos(x, T)
+        # 添加时序位置编码
+        temporal_pos = self.temporal_pos.temporal_embed[:, :T, :]  # (1, T, D)
+        temporal_pos = temporal_pos.unsqueeze(2)  # (1, T, 1, D)
+        x = x + temporal_pos
+        x = self.temporal_pos.dropout(x)
         
-        # 确保是 4D 后再 Reshape 为序列格式
-        if x.dim() == 4:
-            x = x.view(B, T * N, self.embed_dim)
+        # Reshape 为序列格式 (B, T*N, D)
+        x = x.reshape(B, T * N, self.embed_dim)
         
         # Transformer 编码
         for block in self.blocks:
