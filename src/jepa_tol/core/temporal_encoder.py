@@ -313,18 +313,20 @@ class TemporalEncoder(Encoder):
         x = self.patch_embed(x)  # (B*T, D, H', W')
         x = x.flatten(2).transpose(1, 2)  # (B*T, N, D)
         
+        N = x.shape[1]  # patch 数量
+        
         # 添加空间位置编码
-        x = x + self.pos_embed
+        x = x + self.pos_embed[:, :N]  # 确保 pos_embed 尺寸匹配
         
         # Reshape 为视频格式
-        N = x.shape[1]
         x = x.view(B, T, N, self.embed_dim)
         
-        # 添加时序位置编码
+        # 添加时序位置编码 (输入是 4D，输出也是 4D)
         x = self.temporal_pos(x, T)
         
-        # Reshape 为序列格式
-        x = x.view(B, T * N, self.embed_dim)
+        # 确保是 4D 后再 Reshape 为序列格式
+        if x.dim() == 4:
+            x = x.view(B, T * N, self.embed_dim)
         
         # Transformer 编码
         for block in self.blocks:
