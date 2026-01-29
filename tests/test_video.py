@@ -18,7 +18,7 @@ class TestTemporalEncoder:
             depth=2,
             num_heads=4,  # 192 / 4 = 48
             max_frames=8,
-            attention_type="divided",
+            attention_type="joint",  # 使用联合注意力
         )
         
         # 输入视频 (B, T, C, H, W)
@@ -38,6 +38,7 @@ class TestTemporalEncoder:
             depth=2,
             num_heads=4,
             max_frames=8,
+            attention_type="joint",
         )
         
         x = torch.randn(1, 4, 3, 112, 112)
@@ -58,6 +59,7 @@ class TestTemporalEncoder:
             depth=2, 
             num_heads=4,
             max_frames=16,
+            attention_type="joint",
         )
         
         x = torch.randn(1, 8, 3, 112, 112)
@@ -103,8 +105,10 @@ class TestVJEPAModel:
             embed_dim=192,
             encoder_depth=2,
             encoder_heads=4,
+            predictor_dim=96,
             predictor_depth=2,
             predictor_heads=4,
+            attention_type="joint",
         )
         
         x = torch.randn(1, 4, 3, 112, 112)
@@ -123,8 +127,10 @@ class TestVJEPAModel:
             embed_dim=192,
             encoder_depth=2,
             encoder_heads=4,
+            predictor_dim=96,
             predictor_depth=2,
             predictor_heads=4,
+            attention_type="joint",
         )
         
         x = torch.randn(1, 8, 3, 112, 112)
@@ -137,12 +143,16 @@ class TestVJEPAModel:
         from jepa_tol.models.video import VJEPAModel
         
         model = VJEPAModel(
+            img_size=112,
+            patch_size=16,
             embed_dim=192, 
             num_frames=4, 
             encoder_depth=2,
             encoder_heads=4,
+            predictor_dim=96,
             predictor_depth=2,
             predictor_heads=4,
+            attention_type="joint",
         )
         
         pred = torch.randn(1, 50, 192)
